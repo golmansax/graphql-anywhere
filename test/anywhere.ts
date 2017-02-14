@@ -318,6 +318,54 @@ describe('graphql anywhere', () => {
     });
   });
 
+  it('can resolve fragments with nested objects', () => {
+    const resolver = (fieldName, root) => {
+      return root[fieldName];
+    };
+
+    const query = gql`
+      {
+        nestedObj {
+          ...frag
+          deepNestedObj {
+            stringField
+          }
+        }
+      }
+
+      fragment frag on Item {
+        id
+        deepNestedObj {
+          numberField
+        }
+      }
+    `;
+
+    const result: any = {
+      nestedObj: {
+        id: 'abcde',
+        nullField: null,
+        deepNestedObj: {
+          stringField: 'This is a deep string',
+          numberField: 7,
+        },
+      },
+    };
+
+    const queryResult = graphql(resolver, query, result);
+
+    // The result of the query shouldn't contain __data_id fields
+    assert.deepEqual(queryResult, {
+      nestedObj: {
+        id: 'abcde',
+        deepNestedObj: {
+          stringField: 'This is a deep string',
+          numberField: 7,
+        },
+      },
+    });
+  });
+
   it('can resolve deeply nested fragments', () => {
     const resolver = (fieldName, root) => {
       return root[fieldName];
